@@ -17,7 +17,6 @@
 #' }
 
 simplytranslate <- function(from, to, str, instance = NULL, engine = NULL) {
-  str <- utils::URLencode(str)
 
   if (is.null(instance)) {
     if (!nzchar(Sys.getenv("st_inst"))) {
@@ -49,7 +48,6 @@ simplytranslate <- function(from, to, str, instance = NULL, engine = NULL) {
             stop("You have not provided a valid URL. Check it and be sure that contains http:// or https://.")
           }
         }
-
         Sys.setenv(st_inst = st_instance)
       }
     }
@@ -59,7 +57,7 @@ simplytranslate <- function(from, to, str, instance = NULL, engine = NULL) {
     if (!nzchar(Sys.getenv("st_eng"))) {
       message("You did not select any of the available translation engines.")
       cat("\n")
-      message("Please, select one. Keep in mind that the selected one will be the default engine for this session unless you declare one on the function.")
+      message("Please, select one. Keep in mind that the selected one will be the default engine for this session unless you declare another one on the function.")
 
       engine <- utils::menu(
         choices = c(
@@ -80,32 +78,22 @@ simplytranslate <- function(from, to, str, instance = NULL, engine = NULL) {
         message("Using Reverso engine")
       }
     }
-    req <- httr2::request(Sys.getenv("st_inst")) |>
-      httr2::req_url_path_append("/api/translate") |>
-      httr2::req_url_query(engine = Sys.getenv("st_eng"), from = from, to = to, text = str) |>
-      httr2::req_perform()
-
-    resp <- req |>
-      httr2::resp_body_json()
-
-    translation <- resp$translated_text
-
-    return(translation)
-
-  } else if (!is.null(engine)) {
-      req <- httr2::request(Sys.getenv("st_inst")) |>
-        httr2::req_url_path_append("/api/translate") |>
-        httr2::req_url_query(engine = engine, from = from, to = to, text = str) |>
-        httr2::req_perform()
-
-      resp <- req |>
-        httr2::resp_body_json()
-
-      translation <- resp$translated_text
-
-      return(translation)
   }
+  str <- utils::URLencode(str, reserved = T)
+  req <- httr2::request(Sys.getenv("st_inst")) |>
+    httr2::req_url_path_append("/api/translate") |>
+    httr2::req_url_query(engine = Sys.getenv("st_eng"), from = from, to = to, text = str) |>
+    httr2::req_perform()
+
+  resp <- req |>
+    httr2::resp_body_json()
+
+  translation <- utils::URLdecode(resp$translated_text)
+
+  return(translation)
+
 }
+
 
 #' Translate strings using Lingva frontend
 #'
@@ -160,6 +148,7 @@ lingva <- function(from, to, str, instance = NULL) {
   }
 
   str <- utils::URLencode(str, reserved = T)
+
   req <- httr2::request(Sys.getenv("ling_inst")) |>
     httr2::req_url_path_append("/api/v1") |>
     httr2::req_url_path_append(from, to, str)
@@ -175,4 +164,124 @@ lingva <- function(from, to, str, instance = NULL) {
 }
 
 
+#' Get a list of supported languages for the instances
+#'
+#' Run this function and you will be able to know the supported languages for the frontend you choose
+#' and also their ISO-639 code, needed to set the from and to languages
+#' when using the translation functions.
+#'
+#' @export
+#' @examples
+#' \dontrun{
+#' get_languages()
+#' }
+
+get_languages <- function() {
+  message("Please, select the frontend of which you want to obtain the available languages")
+  cat("\n")
+
+  frontend <- utils::menu(
+    choices = c(
+      "Lingva",
+      "SimplyTranslate"
+    )
+  )
+
+  if (frontend == 1) {
+    if (!nzchar(Sys.getenv("ling_inst"))) {
+      message("You don't have a default Lingva instance.")
+      cat("\n")
+      message("Would you like to select the official one or to specify a custom one?")
+      cat("\n")
+      message("Please, keep in mind that the mantainer of the official one has asked to not abuse the API as the costs of the bandwidth are expensive.")
+
+      instance <- utils::menu(
+        choices = c(
+          "I'm going to use responsibly the official one, lingva.thedaviddelta.com",
+          "I'd prefer specifying a custom one"
+        )
+      )
+
+      if (instance == 1) {
+        message("Selected the official one.")
+        Sys.setenv(ling_inst = "https://lingva.thedaviddelta.com")
+
+      } else {
+        ling_instance <- readline("Please, write the URL of your instance, including http or https: ")
+
+        if (!grepl("^https?://", ling_instance)) {
+
+          message("You have not provided a valid URL. Check it and be sure that contains http:// or https://.")
+          ling_instance <- readline("Please, type it again: ")
+
+          if (!grepl("^https?://", ling_instance)) {
+            stop("You have not provided a valid URL. Check it and be sure that contains http:// or https://.")
+          }
+        }
+        Sys.setenv(ling_inst = ling_instance)
+      }
+    }
+
+    req <- httr2::request(Sys.getenv("ling_inst")) |>
+      httr2::req_url_path_append("/api/v1/languages") |>
+      httr2::req_perform()
+
+    resp_details <- req |>
+      httr2::resp_body_json()
+
+    languages <- resp_details$languages
+
+    return(cat(paste("These are the available languages in your configured instance: ", "\n",
+                     languages, collapse = "\n")))
+
+  } else {
+    if (!nzchar(Sys.getenv("st_inst"))) {
+      message("You did not specify any SimplyTranslate instance.")
+      cat("\n")
+      message("Would you like to select the official one or to specify a custom one?")
+
+      instance <- utils::menu(
+        choices = c(
+          "Use the official one, simplytranslate.org",
+          "I'd prefer specifying a custom one"
+        )
+      )
+
+      if (instance == 1) {
+
+        Sys.setenv(st_inst = "https://simplytranslate.org")
+        message("Using the default one, simplytranslate.org")
+
+      } else {
+        st_instance <- readline("Please, write the URL of your instance, including http or https: ")
+
+        if (!grepl("^https?://", st_instance)) {
+
+          message("You have not provided a valid URL. Check it and be sure that contains http:// or https://.")
+          st_instance <- readline("Please, type it again: ")
+
+          if (!grepl("^https?://", st_instance)) {
+            stop("You have not provided a valid URL. Check it and be sure that contains http:// or https://.")
+          }
+        }
+
+        Sys.setenv(st_inst = st_instance)
+      }
+    }
+
+    req <- httr2::request(Sys.getenv("st_inst")) |>
+      httr2::req_url_path_append("/api/target_languages") |>
+      httr2::req_perform()
+
+    resp <- req |>
+      httr2::resp_body_json()
+
+    lang_list <- lapply(names(resp), function(key) {
+      paste(key, ": ", resp[[key]], sep = "")
+    })
+
+    languages <- paste(lang_list, collapse = "\n")
+    return(cat(languages))
+  }
+}
 
