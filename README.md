@@ -10,13 +10,15 @@
 ## Translate in R using opensource frontends for common translations engines
 This R package allows you to translate text directly from R: from dataframes to strings,
 it lets you to use common translations engines like Google Translate using a frontend,
-which it is a benefit in terms of privacy. For now, these are the supported ones:
+which it is a benefit in terms of privacy. 
+
+For now, these are the supported ones:
 
 - [SimplyTranslate](https://codeberg.org/ManeraKai/simplytranslate). It supports Google Translate,
 Reverso and inCIBA.
 - [Lingva](https://github.com/thedaviddelta/lingva-translate). It supports Google Translate. 
 - [gtranslate](https://git.sr.ht/~yerinalexey/gtranslate). Lightweight frontend for Google Translate.
-You can selfhosted it with [my Docker image](https://github.com/myanesp/docker-gtranslate/). (Experimental support) 
+You can selfhost it with [my Docker image](https://github.com/myanesp/docker-gtranslate/). (Experimental support) 
 
 ### Features
 - Translate texts, strings of R objects without leaving R using frontends for Google Translate or Reverso.
