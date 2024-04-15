@@ -163,6 +163,41 @@ lingva <- function(from, to, str, instance = NULL) {
   return(translation)
 }
 
+#' Translate strings using gtranslate frontend
+#'
+#' gtranslate is a privacy-respecting frontend for the Google Translate engine.
+#'
+#' @param from Source language. Specify it with the code following the ISO 639 standard
+#' @param to Specify it with the code following the ISO 639 standard
+#' @param str Text to translate
+#' @export
+#' @examples
+#' \dontrun{
+#' gtranslate(from = "en", to = "es", str = "hello")
+#' }
+
+gtranslate <- function(from, to, str) {
+
+  if (!nzchar(Sys.getenv("gt_inst"))) {
+    message("You have to input your gtranslate instance")
+    cat("\n")
+    gt_inst <- readline("Input here the URL with http or https of your gtranslate instance: ")
+    Sys.setenv("gt_inst" = gt_inst)
+  }
+
+  str <- utils::URLencode(str, reserved = T)
+  req <- httr2::request(Sys.getenv("gt_inst")) |>
+    httr2::req_url_path_append("/api") |>
+    httr2::req_url_query(from = from, to = to, text = str) |>
+    httr2::req_perform()
+
+  resp <- req |>
+    httr2::resp_body_string()
+
+  translation <- utils::URLdecode(resp)
+
+  return(translation)
+}
 
 #' Get a list of supported languages for the instances
 #'
