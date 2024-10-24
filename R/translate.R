@@ -199,6 +199,240 @@ gtranslate <- function(from, to, str) {
   return(translation)
 }
 
+#' Translate strings using Mozhi frontend
+#'
+#' Mozhi is a privacy-respecting frontend that was born as a fork of SimplyTranslate
+#' but now has many more features and supports many more engines.
+#'
+#' @param from Source language. Specify it with the code following the ISO 639 standard
+#' @param to Specify it with the code following the ISO 639 standard
+#' @param str Text to translate
+#' @param instance The Mozhi instance URL you want to use
+#' @param engine The translation engine you want to use. You can see which ones are
+#' available using `get_mozhi_engines()` function
+#' @export
+#' @examples
+#' \dontrun{
+#' mozhi(from = "en", to = "es", str = "hello")
+#' }
+
+mozhi <- function(from, to, str, instance = NULL, engine = NULL) {
+
+  if (is.null(instance)) {
+    if (!nzchar(Sys.getenv("mz_inst"))) {
+      message("You did not specify any Mozhi instance.")
+      cat("\n")
+      message("Would you like to select the Mozhi's mantainer one or to specify a custom one?")
+
+      instance <- utils::menu(
+        choices = c(
+          "Use the Mozhi's mantainer one, mozhi.aryak.me",
+          "I'd prefer specifying a custom one"
+        )
+      )
+
+      if (instance == 1) {
+
+        Sys.setenv(mz_inst = "https://mozhi.aryak.me")
+        message("Using the default one, mozhi.aryak.me")
+
+      } else {
+        mz_instance <- readline("Please, write the URL of your instance, including http or https: ")
+
+        if (!grepl("^https?://", mz_instance)) {
+
+          message("You have not provided a valid URL. Check it and be sure that contains http:// or https://.")
+          st_instance <- readline("Please, type it again: ")
+
+          if (!grepl("^https?://", mz_instance)) {
+            stop("You have not provided a valid URL. Check it and be sure that contains http:// or https://.")
+          }
+        }
+        Sys.setenv(mz_inst = mz_instance)
+      }
+    }
+  }
+
+  if(is.null(engine)) {
+    if (!nzchar(Sys.getenv("mz_eng"))) {
+      cat("\n")
+      message("You did not select any of the available translation engines.")
+      cat("\n")
+      message("Please, select one. Keep in mind that the selected one will be the default engine for this session unless you declare another one on the function.")
+      cat("\n")
+      message("Take into account that if you want to use all engines at once, you will need to run `mozhi_all()` and that")
+      message("the option 'some engines' is not available.")
+
+      availables <- suppressMessages(get_mozhi_engines())
+
+      engine <- utils::menu(
+        choices = availables
+      )
+
+      selected_engine <- availables[engine]
+      Sys.setenv(mz_eng = names(selected_engine))
+      message("Using ", selected_engine, " engine")
+    }
+  }
+
+  if (Sys.getenv("mz_eng") != "google") {
+    str <- utils::URLencode(str, reserved = T)
+  }
+
+  req <- httr2::request(Sys.getenv("mz_inst")) |>
+    httr2::req_url_path_append("/api/translate") |>
+    httr2::req_url_query(engine = Sys.getenv("mz_eng"), from = from, to = to, text = str) |>
+    httr2::req_perform()
+
+  resp <- req |>
+    httr2::resp_body_json()
+
+  translation <- utils::URLdecode(resp$`translated-text`)
+
+  return(translation)
+
+}
+
+#' Translate with all Mozhi available engines.
+#'
+#' This function returns a dataframe with the translated string for each
+#' engine.
+#'
+#' @param from Source language. Specify it with the code following the ISO 639 standard
+#' @param to Specify it with the code following the ISO 639 standard
+#' @param str Text to translate
+#' @param instance The Mozhi instance URL you want to use
+#' @export
+#' @examples
+#' \dontrun{
+#' mozhi_all(from = "es", to = "en", str = text)
+#' }
+
+mozhi_all <- function(from, to, str, instance = NULL) {
+  if (is.null(instance)) {
+    if (!nzchar(Sys.getenv("mz_inst"))) {
+      message("You did not specify any Mozhi instance.")
+      cat("\n")
+      message("Would you like to select the Mozhi's mantainer one or to specify a custom one?")
+
+      instance <- utils::menu(
+        choices = c(
+          "Use the Mozhi's mantainer one, mozhi.aryak.me",
+          "I'd prefer specifying a custom one"
+        )
+      )
+
+      if (instance == 1) {
+
+        Sys.setenv(mz_inst = "https://mozhi.aryak.me")
+        message("Using the default one, mozhi.aryak.me")
+
+      } else {
+        mz_instance <- readline("Please, write the URL of your instance, including http or https: ")
+
+        if (!grepl("^https?://", mz_instance)) {
+
+          message("You have not provided a valid URL. Check it and be sure that contains http:// or https://.")
+          st_instance <- readline("Please, type it again: ")
+
+          if (!grepl("^https?://", mz_instance)) {
+            stop("You have not provided a valid URL. Check it and be sure that contains http:// or https://.")
+          }
+        }
+        Sys.setenv(mz_inst = mz_instance)
+      }
+    }
+  }
+
+  req <- httr2::request(Sys.getenv("mz_inst")) |>
+    httr2::req_url_path_append("/api/translate") |>
+    httr2::req_url_query(engine = "all", from = from, to = to, text = str) |>
+    httr2::req_perform()
+
+  resp <- req |>
+    httr2::resp_body_json()
+
+  df <- do.call(rbind, lapply(resp, function(x) {
+    data.frame(
+      engine = x$engine,
+      translated_text = x$`translated-text`,
+      source_language = x$source_language,
+      target_language = x$target_language,
+      stringsAsFactors = FALSE
+    )
+  }))
+
+  return(df)
+}
+
+#' Get available engines from Mozhi frontend
+#'
+#' View and store the available engines from the Mozhi frontend you've chosen.
+#'
+#' @param instance The Mozhi instance URL you want to use
+#' @export
+#' @examples
+#' \dontrun{
+#' get_mozhi_engines()
+#' }
+
+get_mozhi_engines <- function(instance = NULL){
+  if (is.null(instance)) {
+    if (!nzchar(Sys.getenv("mz_inst"))) {
+      message("You did not specify any Mozhi instance.")
+      cat("\n")
+      message("Would you like to select the Mozhi's mantainer one or to specify a custom one?")
+
+      instance <- utils::menu(
+        choices = c(
+          "Use the Mozhi's mantainer one, mozhi.aryak.me",
+          "I'd prefer specifying a custom one"
+        )
+      )
+
+      if (instance == 1) {
+
+        Sys.setenv(mz_inst = "https://mozhi.aryak.me")
+        message("Using the default one, mozhi.aryak.me")
+
+      } else {
+        mz_instance <- readline("Please, write the URL of your instance, including http or https: ")
+
+        if (!grepl("^https?://", mz_instance)) {
+
+          message("You have not provided a valid URL. Check it and be sure that contains http:// or https://.")
+          st_instance <- readline("Please, type it again: ")
+
+          if (!grepl("^https?://", mz_instance)) {
+            stop("You have not provided a valid URL. Check it and be sure that contains http:// or https://.")
+          }
+        }
+        Sys.setenv(mz_inst = mz_instance)
+      }
+    }
+  }
+
+  req <- httr2::request(Sys.getenv("mz_inst")) |>
+    httr2::req_url_path_append("/api/engines") |>
+    httr2::req_perform()
+
+  resp <- req |>
+    httr2::resp_body_json()
+
+  engines <- unlist(resp)
+
+  availables <- paste(engines, collapse = ", ")
+
+  message("Available engines in this instance: ", availables)
+
+  rem_eng <- !grepl("Engines", resp)
+
+  resp <- resp[rem_eng]
+
+  return(resp)
+}
+
+
 #' Get a list of supported languages for the instances
 #'
 #' Run this function and you will be able to know the supported languages for the frontend you choose
