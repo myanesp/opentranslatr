@@ -323,15 +323,14 @@ get_mozhi_engines <- function(instance = NULL){
           }
         }
         Sys.setenv(mz_inst = mz_instance)
-
-        req <- httr2::request(Sys.getenv("mz_inst")) |>
-          httr2::req_url_path_append("/api/engines") |>
-          httr2::req_perform()
-
-        resp <- req |>
-          httr2::resp_body_json()
       }
     }
+    req <- httr2::request(Sys.getenv("mz_inst")) |>
+      httr2::req_url_path_append("/api/engines") |>
+      httr2::req_perform()
+
+    resp <- req |>
+      httr2::resp_body_json()
   } else if (!is.null(instance)) {
     if (!grepl("^https?://", instance)) {
       message("You have not provided a valid URL. Check it and be sure that contains http:// or https://.")
