@@ -165,7 +165,7 @@ lingva <- function(from, to, str, instance = NULL) {
 
 #' Translate strings using gtranslate frontend
 #'
-#' gtranslate is a privacy-respecting frontend for the Google Translate engine.
+#' gtranslate is a privacy-respecting frontend that uses the Google Translate engine.
 #'
 #' @param from Source language. Specify it with the code following the ISO 639 standard
 #' @param to Specify it with the code following the ISO 639 standard
