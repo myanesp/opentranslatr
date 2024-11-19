@@ -4,8 +4,9 @@ Version: 0.2
 Authors@R: 
     person("Mario", "Yanes", , "mario.yanes@uc3m.es", role = c("aut", "cre"),
            comment = c(ORCID = "0009-0001-0079-6921"))
-Description: This package currently supports Lingva and SimplyTranslate frontends. Both of them uses Google Translate engine, but SimplyTranslate also support Reverso and inCIBA.
-License: GPL-3
+Description: This package supports Lingva, SimplyTranslate, Mozhi and gtranslate frontends. 
+    They support many mainstream translations engines.
+License: file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1

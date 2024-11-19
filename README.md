@@ -18,7 +18,9 @@ For now, these are the supported ones:
 Reverso and inCIBA.
 - [Lingva](https://github.com/thedaviddelta/lingva-translate). It supports Google Translate. 
 - [gtranslate](https://git.sr.ht/~yerinalexey/gtranslate). Lightweight frontend for Google Translate.
-You can selfhost it with [my Docker image](https://github.com/myanesp/docker-gtranslate/). (Experimental support) 
+You can selfhost it with [my Docker image](https://github.com/myanesp/docker-gtranslate/).
+- [Mozhi](https://codeberg.org/aryak/mozhi). Fork of SimplyTranslate, now supports more features
+and translation engines, such as Deepl, LibreTranslate or DuckDuckGo.
 
 ### Features
 - Translate texts, strings of R objects without leaving R using frontends for Google Translate or Reverso.
@@ -45,5 +47,13 @@ simplytranslate(from = "en", to = "de", str = "welcome!")
 simplytranslate(from = "en", to = "fr", str = "welcome!", engine = "reverso") # select engine
 [1] "bienvenue!"
 
+mozhi(from = "en", to = "de", str = "beach", instance = "http://localhost:3000")
+[1] "Strand"
+
+gtrannslate(from = "en", to = "es", str = "table")
+[1] "mesa"
+
 get_languages() # Get available languagues for the frontend you choose
+
+get_mozhi_engines() # Get available languages for the Mozhi instance you choose
 ```
