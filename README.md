@@ -50,7 +50,7 @@ simplytranslate(from = "en", to = "fr", str = "welcome!", engine = "reverso") # 
 mozhi(from = "en", to = "de", str = "beach", instance = "http://localhost:3000")
 [1] "Strand"
 
-gtrannslate(from = "en", to = "es", str = "table")
+gtranslate(from = "en", to = "es", str = "table")
 [1] "mesa"
 
 get_languages() # Get available languagues for the frontend you choose
